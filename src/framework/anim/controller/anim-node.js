@@ -82,7 +82,7 @@ class AnimNode {
     }
 
     get speed() {
-        return this._weightedSpeed * this._speed;
+        return this.weightedSpeed * this._speed;
     }
 
     get absoluteSpeed() {
@@ -94,7 +94,20 @@ class AnimNode {
     }
 
     get weightedSpeed() {
-        return this._weightedSpeed;
+        // compose the weighted speeds up the parent chain, so a blend tree nested inside
+        // another blend tree applies its ancestors' synchronization factors to this node
+        return this._parent ? this._parent.weightedSpeed * this._weightedSpeed : this._weightedSpeed;
+    }
+
+    /**
+     * The duration of one playback cycle of this node's animation, adjusted for its playback
+     * speed. Blend trees sum these durations, weighted by each child's weight, to synchronize
+     * the playback speeds of their children.
+     *
+     * @returns {number} The speed-adjusted duration of the node's animation track.
+     */
+    getWeightedDuration() {
+        return this.animTrack.duration / this.absoluteSpeed;
     }
 
     set animTrack(value) {

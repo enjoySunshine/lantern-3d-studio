@@ -47,14 +47,14 @@ class AnimBlendTreeCartesian2D extends AnimBlendTree {
             child.weight = minj;
             weightSum += minj;
             if (this._syncAnimations) {
-                weightedDurationSum += child.animTrack.duration / child.absoluteSpeed * child.weight;
+                weightedDurationSum += child.getWeightedDuration() * child._weight;
             }
         }
         for (let i = 0; i < this._children.length; i++) {
             const child = this._children[i];
             child.weight = child._weight / weightSum;
             if (this._syncAnimations) {
-                child.weightedSpeed = child.animTrack.duration / child.absoluteSpeed / weightedDurationSum;
+                child.weightedSpeed = child.getWeightedDuration() / weightedDurationSum;
             }
         }
     }

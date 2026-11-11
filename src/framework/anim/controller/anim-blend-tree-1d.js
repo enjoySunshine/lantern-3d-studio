@@ -44,6 +44,13 @@ class AnimBlendTree1D extends AnimBlendTree {
     calculateWeights() {
         if (this.updateParameterValues()) return;
         let weightedDurationSum = 0.0;
+        // clamp the parameter to the range of the children's points, so that values beyond
+        // either end play the nearest end child at full weight instead of zeroing every weight
+        const parameterValue = math.clamp(
+            this._parameterValues[0],
+            this._children[0].point,
+            this._children[this._children.length - 1].point
+        );
         this._children[0].weight = 0.0;
         for (let i = 0; i < this._children.length; i++) {
             const c1 = this._children[i];
@@ -52,9 +59,9 @@ class AnimBlendTree1D extends AnimBlendTree {
                 if (c1.point === c2.point) {
                     c1.weight = 0.5;
                     c2.weight = 0.5;
-                } else if (math.between(this._parameterValues[0], c1.point, c2.point, true)) {
+                } else if (math.between(parameterValue, c1.point, c2.point, true)) {
                     const child2Distance = Math.abs(c1.point - c2.point);
-                    const parameterDistance = Math.abs(c1.point - this._parameterValues[0]);
+                    const parameterDistance = Math.abs(c1.point - parameterValue);
                     const weight = (child2Distance - parameterDistance) / child2Distance;
                     c1.weight = weight;
                     c2.weight = (1.0 - weight);
@@ -63,13 +70,13 @@ class AnimBlendTree1D extends AnimBlendTree {
                 }
             }
             if (this._syncAnimations) {
-                weightedDurationSum += c1.animTrack.duration / c1.absoluteSpeed * c1.weight;
+                weightedDurationSum += c1.getWeightedDuration() * c1._weight;
             }
         }
         if (this._syncAnimations) {
             for (let i = 0; i < this._children.length; i++) {
                 const child = this._children[i];
-                child.weightedSpeed = child.animTrack.duration / child.absoluteSpeed / weightedDurationSum;
+                child.weightedSpeed = child.getWeightedDuration() / weightedDurationSum;
             }
         }
     }

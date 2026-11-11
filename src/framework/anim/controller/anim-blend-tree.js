@@ -56,7 +56,7 @@ class AnimBlendTree extends AnimNode {
                     state,
                     this,
                     child.name,
-                    1.0,
+                    child.point,
                     child.parameter ? [child.parameter] : child.parameters,
                     child.children,
                     child.syncAnimations,
@@ -67,6 +67,10 @@ class AnimBlendTree extends AnimNode {
                 this._children.push(new AnimNode(state, this, child.name, child.point, child.speed));
             }
         }
+    }
+
+    set weight(value) {
+        this._weight = value;
     }
 
     get weight() {
@@ -101,12 +105,28 @@ class AnimBlendTree extends AnimNode {
         return this._children[i].animTrack.duration / this._children[i].speedMultiplier * this._children[i].weight;
     }
 
+    /**
+     * The duration of one playback cycle of the blend this tree currently produces, adjusted for
+     * playback speed. This is the weighted sum of the durations of the tree's children, and is
+     * used instead of a track duration when this tree is itself the child of another blend tree.
+     *
+     * @returns {number} The speed-adjusted duration of the tree's current blend.
+     */
+    getWeightedDuration() {
+        let duration = 0;
+        for (let i = 0; i < this._children.length; i++) {
+            const child = this._children[i];
+            duration += child.getWeightedDuration() * child._weight;
+        }
+        return duration;
+    }
+
     getNodeCount() {
         let count = 0;
         for (let i = 0; i < this._children.length; i++) {
             const child = this._children[i];
-            if (child.constructor === AnimBlendTree) {
-                count += this._children[i].getNodeCount();
+            if (child instanceof AnimBlendTree) {
+                count += child.getNodeCount();
             } else {
                 count++;
             }

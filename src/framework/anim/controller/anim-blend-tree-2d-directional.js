@@ -52,14 +52,16 @@ class AnimBlendTreeDirectional2D extends AnimBlendTree {
             child.weight = minj;
             weightSum += minj;
             if (this._syncAnimations) {
-                weightedDurationSum += (child.animTrack.duration / child.absoluteSpeed) * child.weight;
+                weightedDurationSum += child.getWeightedDuration() * child._weight;
             }
         }
         for (let i = 0; i < this._children.length; i++) {
             const child = this._children[i];
             child.weight = child._weight / weightSum;
             if (this._syncAnimations) {
-                const weightedChildDuration = (child.animTrack.duration / weightedDurationSum) * weightSum;
+                // child blend trees have no single track, so use their blended duration instead
+                const childDuration = child.animTrack ? child.animTrack.duration : child.getWeightedDuration();
+                const weightedChildDuration = (childDuration / weightedDurationSum) * weightSum;
                 child.weightedSpeed =  child.absoluteSpeed * weightedChildDuration;
             }
         }
